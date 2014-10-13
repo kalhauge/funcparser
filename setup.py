@@ -7,7 +7,7 @@ import codecs
 import os
 import sys
 
-import classifier
+import functools
 
 def read(*filenames, **kwargs):
     encoding = kwargs.get('encoding', 'utf-8')
@@ -42,7 +42,7 @@ setup(
     author_email='christian@kalhauge.dk',
     description='',
     long_description=long_description,
-    packages=['classifier', 'pysmt'],
+    packages=['.'],
     include_package_data=True,
     platforms='any',
     classifiers = [
