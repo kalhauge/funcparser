@@ -32,16 +32,16 @@ class PyTest(TestCommand):
         sys.exit(errcode)
 
 setup(
-    name='classifier',
+    name='funcparser',
     version=funcparser.__version__,
-    license='GNU LGPL',
+    license='GNU LGPL v3.0',
     author='Christian Kalhauge',
     tests_require=['pytest'],
     install_requires=[],
     cmdclass={'test': PyTest},
     author_email='christian@kalhauge.dk',
-    description='',
     long_description=long_description,
+    description='A library which transforms functions into a CLI',
     packages=['funcparser'],
     include_package_data=True,
     platforms='any',

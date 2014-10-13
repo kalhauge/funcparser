@@ -27,7 +27,7 @@ and does therefor require a minimum python of 3.X.
 
 """
 
-__VERSION__ = '0.1'
+__version__ = '0.1'
 
 from argparse import ArgumentParser, Action
 from inspect import getfullargspec
