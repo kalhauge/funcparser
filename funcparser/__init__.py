@@ -31,7 +31,7 @@ def parse_args(setup, functions=[], args=None):
     if args is None: args = sys.args[1:]
     parser = ArgumentParser(description=setup.__doc__) 
 
-    parse_function(setup, parser)
+    parse_function(parser, setup)
 
     if functions:
         commands = parser.add_subparsers(help='Commands:')
@@ -40,9 +40,11 @@ def parse_args(setup, functions=[], args=None):
                 clean_name(func.__name__), help=func.__doc__
             ) 
             subparser.set_defaults(cmd=func)
-            parse_function(func, subparser)
+            parse_function(subparser, func)
 
     args = vars(parser.parse_args(args))
+
+    print(args)
 
     general = {}
     setup_specs = getfullargspec(setup)
@@ -58,8 +60,7 @@ def parse_args(setup, functions=[], args=None):
     if result:
         print(result)
 
-def parse_function(func, parser):
-
+def parse_function(parser, func):
     specs = getfullargspec(func)
     no_position_args = len(specs.args) - (
         len(specs.defaults) if specs.defaults else 0
@@ -67,37 +68,55 @@ def parse_function(func, parser):
     for i, name in enumerate(specs.args):
         annotation = specs.annotations[name]
         clean = clean_name(name)
-
         if not i < no_position_args: 
-            argname = '--' + clean
             default = specs.defaults[i - no_position_args]
         else:
-            argname = clean
             default = None
         
-        if annotation == bool:
-            action = 'store_true' if not default else 'store_false'
-            parser.add_argument(
-                argname, action=action,
-                default = default,
-            )
-        elif isinstance(annotation, dict):
-            parser.add_argument(
-                argname, 
-                action=lookup(annotation),
-                choices=annotation,
-                default = default
-            )
-        elif isinstance(annotation, Counter):
-            parser.add_argument(
-                argname, '-' + annotation.char, 
-                action='count'
-            )
-        else:
-            parser.add_argument(
-                argname, type=annotation,
-                default = default
-            )
+        parse_argument(parser, name, specs.annotations[name], default)
+        
+
+def parse_argument(parser, name, annotation, default=None, dest=None):
+    argname = clean_name(name)
+    if not default is None or dest: 
+        argname = '--' + argname
+
+    action = 'store' 
+    choices = None
+    type_ = str
+
+    if annotation == bool:
+        action = 'store_true' if not default else 'store_false'
+    elif isinstance(annotation, dict):
+        action = lookup(annotation)
+        choices = annotation
+    elif isinstance(annotation, Counter):
+        action = 'count'
+        dest = dest if dest else name
+        argname = '-' + annotation.char
+    else:
+        type_ = annotation
+
+    if isinstance(annotation, OneOf):
+        if not default is None:
+            parser.set_defaults(**{name: default})
+        meg = parser.add_mutually_exclusive_group(required=default is None)
+        for key, subtype in annotation.options.items():
+            parse_argument(meg, key, subtype, dest=name)
+    else: 
+        kwargs=dict(
+            dest=dest,
+            type=type_,
+            action=action, 
+            choices=choices,
+            default=default
+        )
+        if not dest: del kwargs['dest']
+        if action in {'count', 'store_true'}: 
+            del kwargs['type']
+            del kwargs['choices']
+        parser.add_argument(argname, **kwargs)
+
 
 all_underscores = re.compile('_')
 def clean_name(name):
@@ -107,6 +126,11 @@ class Counter:
     
     def __init__(self, char):
         self.char = char
+
+class OneOf:
+    
+    def __init__(self, **kwargs):
+        self.options = kwargs
 
 def lookup(dictionary):
     class Lookup(Action):

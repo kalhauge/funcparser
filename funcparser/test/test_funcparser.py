@@ -1,5 +1,5 @@
 
-from funcparser import parse_args, Counter, clean_name
+from funcparser import parse_args, Counter, clean_name, OneOf
 from argparse import FileType
 
 import sys
@@ -86,4 +86,32 @@ def test_dict():
         parse_args(setup, [], 'four'.split())
     except SystemExit: pass
     else: assert False
+
+
+def test_advanced_option():
+
+    result = None
+    def setup(
+            some_value: OneOf(
+                integer=int, 
+                counter=Counter('a'), 
+                binary=lambda x: int(x, 2)
+            )
+    ):
+        nonlocal result
+        result = some_value
+        
     
+    parse_args(setup, [], '--integer 1'.split())
+    assert result == 1
+
+    parse_args(setup, [], '--binary 11111111'.split())
+    assert result == 255
+    
+    parse_args(setup, [], '-aaaa'.split())
+    assert result == 4
+
+
+
+
+

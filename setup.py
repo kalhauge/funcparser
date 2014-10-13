@@ -7,7 +7,7 @@ import codecs
 import os
 import sys
 
-import functools
+import funcparser
 
 def read(*filenames, **kwargs):
     encoding = kwargs.get('encoding', 'utf-8')
@@ -33,7 +33,7 @@ class PyTest(TestCommand):
 
 setup(
     name='classifier',
-    version=classifier.__version__,
+    version=funcparser.__version__,
     license='GNU LGPL',
     author='Christian Kalhauge',
     tests_require=['pytest'],
@@ -42,7 +42,7 @@ setup(
     author_email='christian@kalhauge.dk',
     description='',
     long_description=long_description,
-    packages=['.'],
+    packages=['funcparser'],
     include_package_data=True,
     platforms='any',
     classifiers = [
